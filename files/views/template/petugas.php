@@ -8,17 +8,17 @@
     <meta name="description" content="">
     <meta name="author" cocnntent="">
 
-    <title>Data anggota</title>
+    <title>Data petugas</title>
 
     <!-- Custom fonts for this template -->
-    <link href="../../public/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="../../../../PERPUSTAKAAN/files/public/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="../../public/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="../../../../PERPUSTAKAAN/files/public/css/sb-admin-2.min.css" rel="stylesheet">
 
     <!-- Custom styles for this page -->
-    <link href="../../public/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link href="../../../../PERPUSTAKAAN/files/public/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
     <link href="../../../../PERPUSTAKAAN/files/public/assets/ARS.jpg" rel="shortcut icon">
 
     <style>
@@ -29,16 +29,16 @@
 </head>
 
 <?php
-include("../../app/koneksi.php");
+include(__DIR__ . '/../../app/koneksi.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['edit_id'])) {
         $id = $_POST['edit_id'];
-        $nama_anggota = $_POST['nama_anggota'];
-        $jurusan = $_POST['jurusan'];
-        $no_telp = $_POST['no_telp'];
+        $nama_petugas = $_POST['nama_petugas'];
+        $username = $_POST['username'];
+        $password = $_POST['password'];
 
-        $update = mysqli_query($conn, "UPDATE anggota SET nama_anggota='$nama_anggota', jurusan='$jurusan', no_telp='$no_telp' WHERE id_peminjam='$id'");
+        $update = mysqli_query($conn, "UPDATE petugas SET nama_petugas='$nama_petugas', username='$username', password='$password' WHERE id_petugas='$id'");
 
         if ($update) {
             header("Location: " . $_SERVER['PHP_SELF']);
@@ -47,11 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo "Error: " . mysqli_error($conn);
         }
     } else {
-        $nama_anggota = $_POST['nama_anggota'];
-        $jurusan = $_POST['jurusan'];
-        $no_telp = $_POST['no_telp'];
+        $nama_petugas = $_POST['nama_petugas'];
+        $username = $_POST['username'];
+        $password = $_POST['password'];
 
-        $insert = mysqli_query($conn, "INSERT INTO anggota (nama_anggota, jurusan, no_telp) VALUES ('$nama_anggota', '$jurusan', '$no_telp')");
+        $insert = mysqli_query($conn, "INSERT INTO petugas (nama_petugas, username, password) VALUES ('$nama_petugas', '$username', '$password')");
 
         if ($insert) {
             header("Location: " . $_SERVER['PHP_SELF']);
@@ -62,21 +62,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$query = mysqli_query($conn, "SELECT * FROM anggota ORDER BY id_peminjam ASC");
+$query = mysqli_query($conn, "SELECT * FROM petugas ORDER BY id_petugas ASC");
 if (!$query) {
     die("Query gagal: " . mysqli_error($conn));
 }
 
 if (isset($_GET['hapus'])) {
     $id = $_GET['hapus'];
-    $hapus = $conn->query("DELETE FROM anggota WHERE id_peminjam='$id'");
-    echo "<script>window.location.href='anggota.php';</script>";
+    $hapus = $conn->query("DELETE FROM petugas WHERE id_petugas='$id'");
+    echo "<script>window.location.href='petugas.php';</script>";
 }
 
 $editData = null;
 if (isset($_GET['edit'])) {
     $id = $_GET['edit'];
-    $editQuery = mysqli_query($conn, "SELECT * FROM anggota WHERE id_peminjam='$id'");
+    $editQuery = mysqli_query($conn, "SELECT * FROM petugas WHERE id_petugas='$id'");
     $editData = mysqli_fetch_assoc($editQuery);
 }
 ?>
@@ -94,48 +94,43 @@ if (isset($_GET['edit'])) {
             <div class="container-fluid">
 
                 <!-- Page Heading -->
-                <h1 class="h3 mb-2 text-gray-800 page-heading">Tables</h1>
+                <h1 class="h3 mb-2 text-gray-800 page-heading">Data petugas</h1>
                 <p class="mb-4">DataTables is a third party plugin that is used to generate the demo table below. For more information about DataTables, please visit the <a target="_blank" href="https://datatables.net">official DataTables documentation</a>.</p>
 
                 <!-- DataTales Example -->
                 <div class="card shadow mb-4">
                     <div class="card-header py-3">
-                        <button class="btn btn-primary" data-toggle="modal" data-target="#exampleModal"><i class="fa fa-plus"></i> Tambah Data Anggota</button>
+                        <button class="btn btn-primary" data-toggle="modal" data-target="#exampleModal"><i class="fa fa-plus"></i> Tambah Data petugas</button>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                                 <thead>
                                     <tr>
-                                        <th>id_peminjam</th>
+                                        <th>id_petugas</th>
                                         <th>Nama</th>
-                                        <th>jurusan</th>
-                                        <th>no telepon</th>
-                                        <th>aksi</th>
+                                        <th>Username</th>
+                                        <th>Password</th>
+                                        <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php
-                                    $id_peminjam = 1;
+                                    $id_petugas = 1;
                                     while ($data = $query->fetch_object()) {
                                     ?>
                                         <tr>
-                                            <td><?= $id_peminjam; ?></td>
-                                            <td><?= $data->nama_anggota; ?></td>
-                                            <td><?= $data->jurusan; ?></td>
-                                            <td><?= $data->no_telp; ?></td>
+                                            <td><?= $id_petugas; ?></td>
+                                            <td><?= $data->nama_petugas; ?></td>
+                                            <td><?= $data->username; ?></td>
+                                            <td><?= $data->password; ?></td>
                                             <td>
-                                                <a href="?edit=<?= $data->id_peminjam; ?>" class="btn btn-primary btn-sm" data-target="#editModal"><i class="fa fa-edit"></i> Edit</a>
-                                                <a href="?hapus=<?= $data->id_peminjam; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Yakin menghapus data ini?');">
-                                                    <i class="fa fa-trash"></i> Hapus
-                                                </a>
+                                                <a href="?edit=<?= $data->id_petugas; ?>" class="btn btn-primary btn-sm" data-target="#editModal"><i class="fa fa-edit"></i> Edit</a>
                                             </td>
-
-
                                             </td>
                                         </tr>
                                     <?php
-                                        $id_peminjam++;
+                                        $id_petugas++;
                                     }
                                     ?>
                                 </tbody>
@@ -154,27 +149,27 @@ if (isset($_GET['edit'])) {
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">FORM INPUT DATA ANGGOTA</h5>
+                        <h5 class="modal-title" id="exampleModalLabel">FORM INPUT DATA PETUGAS</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <!-- Bagian Form-->
                     <div class="modal-body">
-                        <form method="post" action="../../../../PERPUSTAKAAN/files/views/template/anggota.php">
+                        <form method="post" action="../../../../PERPUSTAKAAN/files/views/template/petugas.php">
                             <div class="form-group">
-                                <label>NAMA ANGGOTA</label>
-                                <input type="text" name="nama_anggota" class="form-control">
+                                <label>NAMA PETUGAS</label>
+                                <input type="text" name="nama_petugas" class="form-control">
                             </div>
 
                             <div class="form-group">
-                                <label>JURUSAN</label>
-                                <input type="text" name="jurusan" class="form-control">
+                                <label>USERNAME</label>
+                                <input type="text" name="username" class="form-control">
                             </div>
 
                             <div class="form-group">
-                                <label>NO TELEPON</label>
-                                <input type="text" name="no_telp" class="form-control">
+                                <label>PASSWORD</label>
+                                <input type="text" name="password" class="form-control">
                             </div>
 
                             <button type="reset" class="btn btn-danger" data-dismiss="modal">Reset</button>
@@ -192,25 +187,25 @@ if (isset($_GET['edit'])) {
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">FORM EDIT DATA ANGGOTA</h5>
+                        <h5 class="modal-title" id="exampleModalLabel">FORM EDIT DATA petugas</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <form action="../../../../PERPUSTAKAAN/files/views/template/anggota.php" method="post">
-                            <input type="hidden" name="edit_id" value="<?= isset($editData['id_peminjam']) ? $editData['id_peminjam'] : '' ?>">
+                        <form action="../../../../PERPUSTAKAAN/files/views/template/petugas.php" method="post">
+                            <input type="hidden" name="edit_id" value="<?= isset($editData['id_petugas']) ? $editData['id_petugas'] : '' ?>">
                             <div class="form-group">
-                                <label for="nama_anggota">Nama Anggota</label>
-                                <input type="text" name="nama_anggota" class="form-control" value="<?= isset($editData['nama_anggota']) ? $editData['nama_anggota'] : '' ?>">
+                                <label for="nama_petugas">Nama petugas</label>
+                                <input type="text" name="nama_petugas" class="form-control" value="<?= isset($editData['nama_petugas']) ? $editData['nama_petugas'] : '' ?>">
                             </div>
                             <div class="form-group">
-                                <label for="jurusan">Jurusan</label>
-                                <input type="text" name="jurusan" class="form-control" value="<?= isset($editData['jurusan']) ? $editData['jurusan'] : '' ?>">
+                                <label for="username">Username</label>
+                                <input type="text" name="username" class="form-control" value="<?= isset($editData['username']) ? $editData['username'] : '' ?>">
                             </div>
                             <div class="form-group">
-                                <label for="no_telp">No Telepon</label>
-                                <input type="text" name="no_telp" class="form-control" value="<?= isset($editData['no_telp']) ? $editData['no_telp'] : '' ?>">
+                                <label for="password">Password</label>
+                                <input type="text" name="password" class="form-control" value="<?= isset($editData['password']) ? $editData['password'] : '' ?>">
                             </div>
                             <button type="reset" class="btn btn-danger" data-dismiss="modal">Reset</button>
                             <button type="submit" class="btn btn-primary">Simpan</button>
@@ -219,16 +214,6 @@ if (isset($_GET['edit'])) {
                 </div>
             </div>
         </div>
-
-        <!-- Footer -->
-        <footer class="sticky-footer bg-white">
-            <div class="container my-auto">
-                <div class="copyright text-center my-auto">
-                    <span>Copyright &copy; Your Website 2020</span>
-                </div>
-            </div>
-        </footer>
-        <!-- End of Footer -->
     </div>
     <!-- End of Content Wrapper -->
 
@@ -241,21 +226,21 @@ if (isset($_GET['edit'])) {
 </a>
 
 <!-- Bootstrap core JavaScript-->
-<script src="../../public/vendor/jquery/jquery.min.js"></script>
-<script src="../../public/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="../../../../PERPUSTAKAAN/files/public/vendor/jquery/jquery.min.js"></script>
+<script src="../../../../../../PERPUSTAKAAN/files/public/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
 <!-- Core plugin JavaScript-->
-<script src="../../public/vendor/jquery-easing/jquery.easing.min.js"></script>
+<script src="/../../../../PERPUSTAKAAN/files/public/vendor/jquery-easing/jquery.easing.min.js"></script>
 
 <!-- Custom scripts for all pages-->
-<script src="../../public/js/sb-admin-2.min.js"></script>
+<script src="../../../../PERPUSTAKAAN/files/public/js/sb-admin-2.min.js"></script>
 
 <!-- Page level plugins -->
-<script src="../../public/vendor/datatables/jquery.dataTables.min.js"></script>
-<script src="../../public/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+<script src="../../../../PERPUSTAKAAN/files/public/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="../../../../PERPUSTAKAAN/files/public/vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
 <!-- Page level custom scripts -->
-<script src="../../public/js/demo/datatables-demo.js"></script>
+<script src="../../../../PERPUSTAKAAN/files/public/js/demo/datatables-demo.js"></script>
 
 <?php if (isset($_GET['edit'])) { ?>
     <script>

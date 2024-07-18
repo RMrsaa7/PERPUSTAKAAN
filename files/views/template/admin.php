@@ -8,7 +8,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Data peminjaman</title>
+    <title>Data admin</title>
 
     <!-- Custom fonts for this template -->
     <link href="../../../../PERPUSTAKAAN/files/public/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -26,7 +26,27 @@
             margin-top: 20px;
         }
 
-        s
+        .password-container {
+            position: relative;
+            width: 135px;
+            /* Mengatur lebar password input container */
+
+        }
+
+        .password-container input {
+            width: 100%;
+            padding-right: 0px;
+            border: none;
+
+        }
+
+        .password-container .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -34,40 +54,28 @@
 include(__DIR__ . '/../../app/koneksi.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nim = $_POST['nim'];
-    $id_buku = $_POST['id_buku'];
-    $id_rak = $_POST['id_rak'];
-    $tgl_pinjam = $_POST['tgl_pinjam'];
-    $id_admin = $_POST['id_admin'];
-    $tenggat = $_POST['tenggat'];
-    $status_peminjaman = $_POST['status_peminjaman'];
-
     if (isset($_POST['edit_id'])) {
         $id = $_POST['edit_id'];
-        $update = mysqli_query($conn, "UPDATE peminjaman SET nim='$nim', id_buku='$id_buku', id_rak='$id_rak', tgl_pinjam='$tgl_pinjam', id_admin='$id_admin', tenggat='$tenggat', status_peminjaman='$status_peminjaman' WHERE id_peminjaman='$id'");
+        $nama_admin = $_POST['nama_admin'];
+        $username = $_POST['username'];
+        $password = $_POST['password'];
+
+        $update = mysqli_query($conn, "UPDATE admin SET nama_admin='$nama_admin', username='$username', password='$password' WHERE id_admin='$id'");
 
         if ($update) {
-            // Check if status_peminjaman changed to 'Dipinjam'
-            $statusBeforeUpdateQuery = mysqli_query($conn, "SELECT status_peminjaman FROM peminjaman WHERE id_peminjaman='$id'");
-            if ($statusBeforeUpdateQuery) {
-                $statusBeforeUpdate = mysqli_fetch_assoc($statusBeforeUpdateQuery)['status_peminjaman'];
-                if ($status_peminjaman === 'Dipinjam' && $statusBeforeUpdate !== 'Dipinjam') {
-                    // Update stok buku
-                    mysqli_query($conn, "UPDATE stok SET sisa_stok = sisa_stok - 1 WHERE id_buku = '$id_buku'");
-                }
-            }
-
             header("Location: " . $_SERVER['PHP_SELF']);
             exit();
         } else {
             echo "Error: " . mysqli_error($conn);
         }
     } else {
-        $insert = mysqli_query($conn, "INSERT INTO peminjaman (nim, id_buku, id_rak, tgl_pinjam, id_admin, tenggat, status_peminjaman) VALUES ('$nim', '$id_buku', '$id_rak', '$tgl_pinjam', '$id_admin', '$tenggat', '$status_peminjaman')");
+        $nama_admin = $_POST['nama_admin'];
+        $username = $_POST['username'];
+        $password = $_POST['password'];
+
+        $insert = mysqli_query($conn, "INSERT INTO admin (nama_admin, username, password) VALUES ('$nama_admin', '$username', '$password')");
 
         if ($insert) {
-            // Update stok buku
-            mysqli_query($conn, "UPDATE stok SET sisa_stok = sisa_stok - 1 WHERE id_buku = '$id_buku'");
             header("Location: " . $_SERVER['PHP_SELF']);
             exit();
         } else {
@@ -76,38 +84,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$query = mysqli_query($conn, "SELECT * FROM peminjaman ORDER BY id_peminjaman ASC");
+$query = mysqli_query($conn, "SELECT * FROM admin ORDER BY id_admin ASC");
 if (!$query) {
     die("Query gagal: " . mysqli_error($conn));
 }
 
 if (isset($_GET['hapus'])) {
     $id = $_GET['hapus'];
-    $hapus = mysqli_query($conn, "DELETE FROM peminjaman WHERE id_peminjaman='$id'");
-    if ($hapus) {
-        echo "<script>window.location.href='peminjaman.php';</script>";
-    } else {
-        echo "Error: " . mysqli_error($conn);
-    }
+    $hapus = $conn->query("DELETE FROM admin WHERE id_admin='$id'");
+    echo "<script>window.location.href='admin.php';</script>";
 }
 
 $editData = null;
 if (isset($_GET['edit'])) {
     $id = $_GET['edit'];
-    $editQuery = mysqli_query($conn, "SELECT * FROM peminjaman WHERE id_peminjaman='$id'");
-    if ($editQuery) {
-        $editData = mysqli_fetch_assoc($editQuery);
-    } else {
-        echo "Error: " . mysqli_error($conn);
-    }
+    $editQuery = mysqli_query($conn, "SELECT * FROM admin WHERE id_admin='$id'");
+    $editData = mysqli_fetch_assoc($editQuery);
 }
 ?>
 
-
-
-
-
-<body>
 <body id="page-top">
 
     <!-- Page Wrapper -->
@@ -143,7 +138,7 @@ if (isset($_GET['edit'])) {
                 <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/anggota.php">Data Anggota</a>
-                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/admin.php">Data Admin</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/admin.php">Data admin</a>
                     </div>
                 </div>
             </li>
@@ -241,7 +236,7 @@ if (isset($_GET['edit'])) {
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800 page-heading">Tabel data peminjaman</h1>
+                    <h1 class="h3 mb-2 text-gray-800 page-heading">Tabel data admin</h1>
 
                     <!-- DataTales Example -->
                     <div class="card shadow mb-4">
@@ -252,48 +247,41 @@ if (isset($_GET['edit'])) {
                             <div class="table-responsive">
                                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                                     <thead>
-                                        <tr style="font-size: 13px;">
+                                        <tr>
                                             <th>ID</th>
-                                            <th>nim</th>
-                                            <th>id buku</th>
-                                            <th>rak</th>
-                                            <th>tgl pinjam</th>
-                                            <th>id admin</th>
-                                            <th>tenggat</th>
-                                            <th>status</th>
+                                            <th>nama admin</th>
+                                            <th>username</th>
+                                            <th>password</th>
                                             <th>aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php
-                                        $id_peminjaman = 1;
+                                        include(__DIR__ . '/../../app/koneksi.php');
+                                        $query = mysqli_query($conn, "SELECT * FROM admin ORDER BY id_admin ASC");
+                                        $id_admin = 1;
                                         while ($data = $query->fetch_object()) {
-                                            $statusClass = $data->status_peminjaman == 'Dikembalikan' ? 'border-dikembalikan' : 'border-dipinjam';
                                         ?>
-                                            <tr style="font-size: 14px;">
-                                                <td><?= $id_peminjaman; ?></td>
-                                                <td><?= $data->nim; ?></td>
-                                                <td><?= $data->id_buku; ?></td>
-                                                <td><?= $data->id_rak; ?></td>
-                                                <td><?= $data->tgl_pinjam; ?></td>
-                                                <td><?= $data->id_admin; ?></td>
-                                                <td><?= $data->tenggat; ?></td>
-                                                <td><?= $data->status_peminjaman; ?></td>
-                                                <td >
-                                                    <a href="?edit=<?= $data->id_peminjaman; ?>" class="btn btn-warning" style="font-size: 12px; padding: 2px 5px;" data-target="#editModal">
+                                            <tr>
+                                                <td><?= $id_admin; ?></td>
+                                                <td><?= $data->nama_admin; ?></td>
+                                                <td><?= $data->username; ?></td>
+                                                <td class="password-container">
+                                                    <input type="password" value="<?= $data->password; ?>" readonly>
+                                                    <i class="fas fa-eye toggle-password"></i>
+                                                </td>
+                                                <td>
+                                                    <a href="?edit=<?= $data->id_admin; ?>" class="btn btn-warning" style="font-size: 14px; padding: 2px 5px;" data-target="#editModal">
                                                         <i class="fa fa-edit" style="font-size: 14px;"></i> Edit
                                                     </a>
-                                                    <a href="?hapus=<?= $data->id_peminjaman; ?>" class="btn btn-danger btn-sm" style="font-size: 12px; padding: 2px 5px;" onclick="return confirm('Yakin menghapus data ini?');">
+                                                    <a href="?hapus=<?= $data->id_admin; ?>" class="btn btn-danger btn-sm" style="font-size: 14px; padding: 2px 5px;" onclick="return confirm('Yakin menghapus data ini?');">
                                                         <i class="fa fa-trash" style="font-size: 14px;"></i> Hapus
                                                     </a>
                                                 </td>
-
-
-
                                                 </td>
                                             </tr>
                                         <?php
-                                            $id_peminjaman++;
+                                            $id_admin++;
                                         }
                                         ?>
                                     </tbody>
@@ -312,47 +300,27 @@ if (isset($_GET['edit'])) {
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">FORM INPUT DATA PEMINJAMAN</h5>
+                            <h5 class="modal-title" id="exampleModalLabel">FORM INPUT DATA admin</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
                         <!-- Bagian Form-->
                         <div class="modal-body">
-                            <form method="post" action="../../../../PERPUSTAKAAN/files/views/template/peminjaman.php">
+                            <form method="post" action="../../../../PERPUSTAKAAN/files/views/template/admin.php">
                                 <div class="form-group">
-                                    <label>nim</label>
-                                    <input type="text" name="nim" class="form-control">
+                                    <label>nama admin</label>
+                                    <input type="text" name="nama_admin" class="form-control">
                                 </div>
 
                                 <div class="form-group">
-                                    <label>id_buku</label>
-                                    <input type="text" name="id_buku" class="form-control">
+                                    <label>username</label>
+                                    <input type="text" name="username" class="form-control">
                                 </div>
 
                                 <div class="form-group">
-                                    <label>id_rak</label>
-                                    <input type="text" name="id_rak" class="form-control">
-                                </div>
-
-                                <div class="form-group">
-                                    <label>tgl_pinjam</label>
-                                    <input type="date" name="tgl_pinjam" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label>id_admin</label>
-                                    <input type="text" name="id_admin" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label for="tenggat">tenggat</label>
-                                    <input type="date" name="tenggat" class="form-control" value="<?= isset($editData['tenggat']) ? $editData['tenggat'] : '' ?>">
-                                </div>
-                                <div class="form-group">
-                                    <label for="status_peminjaman">Status Peminjaman:</label>
-                                    <div>
-                                        <input type="radio" name="status_peminjaman" value="Dipinjam"> Dipinjam
-                                        <input type="radio" name="status_peminjaman" value="Dikembalikan"> Dikembalikan
-                                    </div>
+                                    <label>password</label>
+                                    <input type="password" name="password" class="form-control">
                                 </div>
                                 <button type="reset" class="btn btn-danger" data-dismiss="modal">Reset</button>
                                 <button type="submit" class="btn btn-primary">Simpan</button>
@@ -369,46 +337,26 @@ if (isset($_GET['edit'])) {
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">FORM EDIT DATA peminjaman</h5>
+                            <h5 class="modal-title" id="exampleModalLabel">FORM EDIT DATA admin</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
                         <div class="modal-body">
-                            <form action="../../../../PERPUSTAKAAN/files/views/template/peminjaman.php" method="post">
-                                <input type="hidden" name="edit_id" value="<?= isset($editData['id_peminjaman']) ? $editData['id_peminjaman'] : '' ?>">
+                            <form action="../../../../PERPUSTAKAAN/files/views/template/admin.php" method="post">
+                                <input type="hidden" name="edit_id" value="<?= isset($editData['id_admin']) ? $editData['id_admin'] : '' ?>">
                                 <div class="form-group">
-                                    <label for="nim">nim</label>
-                                    <input type="text" name="nim" class="form-control" value="<?= isset($editData['nim']) ? $editData['nim'] : '' ?>">
+                                    <label for="nama_admin">nama admin</label>
+                                    <input type="text" name="nama_admin" class="form-control" value="<?= isset($editData['nama_admin']) ? $editData['nama_admin'] : '' ?>">
                                 </div>
                                 <div class="form-group">
-                                    <label for="id_buku">id_buku</label>
-                                    <input type="text" name="id_buku" class="form-control" value="<?= isset($editData['id_buku']) ? $editData['id_buku'] : '' ?>">
+                                    <label for="username">username</label>
+                                    <input type="text" name="username" class="form-control" value="<?= isset($editData['username']) ? $editData['username'] : '' ?>">
                                 </div>
                                 <div class="form-group">
-                                    <label for="id_rak">id_rak</label>
-                                    <input type="text" name="id_rak" class="form-control" value="<?= isset($editData['id_rak']) ? $editData['id_rak'] : '' ?>">
+                                    <label for="password">password</label>
+                                    <input type="text" name="password" class="form-control" value="<?= isset($editData['password']) ? $editData['password'] : '' ?>">
                                 </div>
-                                <div class="form-group">
-                                    <label for="tgl_pinjam">tgl_pinjam</label>
-                                    <input type="date" name="tgl_pinjam" class="form-control" value="<?= isset($editData['tgl_pinjam']) ? $editData['tgl_pinjam'] : '' ?>">
-                                </div>
-                                <div class="form-group">
-                                    <label for="id_admin">id_admin</label>
-                                    <input type="text" name="id_admin" class="form-control" value="<?= isset($editData['id_admin']) ? $editData['id_admin'] : '' ?>">
-                                </div>
-                                <div class="form-group">
-                                    <label for="tenggat">tenggat</label>
-                                    <input type="date" name="tenggat" class="form-control" value="<?= isset($editData['tenggat']) ? $editData['tenggat'] : '' ?>">
-                                </div>
-                                <div class="form-group">
-                                    <label for="status_peminjaman">Status Peminjaman:</label>
-                                    <div>
-                                        <input type="radio" name="status_peminjaman" value="Dipinjam" <?= isset($editData['status_peminjaman']) && $editData['status_peminjaman'] == 'Dipinjam' ? 'checked' : '' ?>> Dipinjam
-                                        <input type="radio" name="status_peminjaman" value="Dikembalikan" <?= isset($editData['status_peminjaman']) && $editData['status_peminjaman'] == 'Dikembalikan' ? 'checked' : '' ?>> Dikembalikan
-                                    </div>
-                                </div>
-
                                 <button type="reset" class="btn btn-danger" data-dismiss="modal">Reset</button>
                                 <button type="submit" class="btn btn-primary">Simpan</button>
                             </form>
@@ -461,6 +409,20 @@ if (isset($_GET['edit'])) {
             });
         </script>
     <?php } ?>
+
+    <script>
+        $(document).on('click', '.toggle-password', function() {
+            var input = $(this).prev('input');
+            var icon = $(this);
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                icon.removeClass('fa-eye').addClass('fa-eye-slash');
+            } else {
+                input.attr('type', 'password');
+                icon.removeClass('fa-eye-slash').addClass('fa-eye');
+            }
+        });
+    </script>
 
 </body>
 

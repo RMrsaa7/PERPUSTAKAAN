@@ -31,6 +31,30 @@
 <?php
 include(__DIR__ . '/../../app/koneksi.php');
 
+// Fungsi untuk mengupdate keterangan stok di tabel buku berdasarkan stok di tabel stok
+function updateBukuKeteranganStok($conn) {
+    // Query untuk mendapatkan jumlah stok dari tabel stok dan mengupdate tabel buku
+    $query = "
+        UPDATE buku b
+        LEFT JOIN (
+            SELECT id_buku, SUM(sisa_stok) AS stok
+            FROM stok
+            GROUP BY id_buku
+        ) s ON b.id_buku = s.id_buku
+        SET b.stok = CASE
+            WHEN COALESCE(s.stok, 0) > 0 THEN 'Tersedia'
+            ELSE 'Kosong'
+        END";
+    
+    $result = mysqli_query($conn, $query);
+    if (!$result) {
+        die("Query gagal: " . mysqli_error($conn));
+    }
+}
+
+// Panggil fungsi untuk mengupdate keterangan stok
+updateBukuKeteranganStok($conn);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['edit_id'])) {
         $id = $_POST['edit_id'];
@@ -44,6 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $update = mysqli_query($conn, "UPDATE buku SET judul_buku='$judul_buku', pengarang='$pengarang', penerbit='$penerbit', tahun_terbit='$tahun_terbit', id_kategori='$id_kategori', stok='$stok' WHERE id_buku='$id'");
 
         if ($update) {
+            // Update keterangan stok setelah melakukan update buku
+            updateBukuKeteranganStok($conn);
             header("Location: " . $_SERVER['PHP_SELF']);
             exit();
         } else {
@@ -57,9 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_kategori = $_POST['id_kategori'];
         $stok = $_POST['stok'];
 
-        $insert = mysqli_query($conn, "INSERT INTO buku (judul_buku, pengarang, penerbit, tahun_terbit, id_kategori, stok) VALUES ('$judul_buku', '$pengarang', '$penerbit', 'tahum_terbit', 'id_kategori', 'stok')");
+        $insert = mysqli_query($conn, "INSERT INTO buku (judul_buku, pengarang, penerbit, tahun_terbit, id_kategori, stok) VALUES ('$judul_buku', '$pengarang', '$penerbit', '$tahun_terbit', '$id_kategori', '$stok')");
 
         if ($insert) {
+            // Update keterangan stok setelah melakukan insert buku
+            updateBukuKeteranganStok($conn);
             header("Location: " . $_SERVER['PHP_SELF']);
             exit();
         } else {
@@ -76,7 +104,13 @@ if (!$query) {
 if (isset($_GET['hapus'])) {
     $id = $_GET['hapus'];
     $hapus = $conn->query("DELETE FROM buku WHERE id_buku='$id'");
-    echo "<script>window.location.href='buku.php';</script>";
+    if ($hapus) {
+        // Update keterangan stok setelah menghapus buku
+        updateBukuKeteranganStok($conn);
+        echo "<script>window.location.href='buku.php';</script>";
+    } else {
+        echo "Error: " . mysqli_error($conn);
+    }
 }
 
 $editData = null;
@@ -85,7 +119,11 @@ if (isset($_GET['edit'])) {
     $editQuery = mysqli_query($conn, "SELECT * FROM buku WHERE id_buku='$id'");
     $editData = mysqli_fetch_assoc($editQuery);
 }
+
+$sql = "SELECT id_kategori, nama_kategori FROM kategori";
+$result = $conn->query($sql);
 ?>
+
 
 <body id="page-top">
 
@@ -121,8 +159,8 @@ if (isset($_GET['edit'])) {
                 </a>
                 <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/sidebar.php">Data Anggota</a>
-                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/petugas.php">Data Petugas</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/anggota.php">Data Anggota</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/admin.php">Data Admin</a>
                     </div>
                 </div>
             </li>
@@ -136,10 +174,25 @@ if (isset($_GET['edit'])) {
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/peminjaman.php">Peminjaman</a>
                         <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/pengembalian.php">Pengembalian</a>
-                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/buku.php">Buku</a>
                     </div>
                 </div>
             </li>
+            <!--Collapse Buku-->
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseBuku" aria-expanded="true" aria-controls="collapseBuku">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>BUKU</span>
+                </a>
+                <div id="collapseBuku" class="collapse" aria-labelledby="headingBuku" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/buku.php">Buku</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/kategori.php">Kategori</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/rak.php">Rak</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/stok.php">Stok</a>
+                    </div>
+                </div>
+            </li>
+
             <!-- Divider -->
             <hr class="sidebar-divider">
         </ul>
@@ -161,73 +214,12 @@ if (isset($_GET['edit'])) {
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto">
 
-                        <!-- Nav Item - Search Dropdown (Visible Only XS) -->
-                        <li class="nav-item dropdown no-arrow d-sm-none">
-                            <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-search fa-fw"></i>
-                            </a>
-                            <!-- Dropdown - Messages -->
-                            <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in" aria-labelledby="searchDropdown">
-                                <form class="form-inline mr-auto w-100 navbar-search">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search" aria-describedby="basic-addon2">
-                                        <div class="input-group-append">
-                                            <button class="btn btn-primary" type="button">
-                                                <i class="fas fa-search fa-sm"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </li>
-
                         <!-- Nav Item - Alerts -->
                         <li class="nav-item dropdown no-arrow mx-1">
-                            <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-bell fa-fw"></i>
+                            <a class="nav-link dropdown-toggle" href="https://ars.ac.id" target="_blank" role="button">
                                 <!-- Counter - Alerts -->
-                                <span class="badge badge-danger badge-counter">3+</span>
+                                <span>ARS UNIVERSITY</span>
                             </a>
-                            <!-- Dropdown - Alerts -->
-                            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="alertsDropdown">
-                                <h6 class="dropdown-header">
-                                    Alerts Center
-                                </h6>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-primary">
-                                            <i class="fas fa-file-alt text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 12, 2019</div>
-                                        <span class="font-weight-bold">A new monthly report is ready to download!</span>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-success">
-                                            <i class="fas fa-donate text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 7, 2019</div>
-                                        $290.29 has been deposited into your account!
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-warning">
-                                            <i class="fas fa-exclamation-triangle text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 2, 2019</div>
-                                        Spending Alert: We've noticed unusually high spending for your account.
-                                    </div>
-                                </a>
-                                <a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
-                            </div>
                         </li>
 
                         <div class="topbar-divider d-none d-sm-block"></div>
@@ -235,8 +227,7 @@ if (isset($_GET['edit'])) {
                         <!-- Nav Item - User Information -->
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Douglas McGee</span>
-                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
+                                <img class="img-profile rounded-circle" src="../../../../PERPUSTAKAAN/files/public/assets/ARS.jpg">
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
@@ -278,7 +269,7 @@ if (isset($_GET['edit'])) {
                             <div class="table-responsive">
                                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                                     <thead>
-                                        <tr>
+                                        <tr style="font-size: 14px;">
                                             <th>id_buku</th>
                                             <th>judul_buku</th>
                                             <th>pengarang</th>
@@ -294,7 +285,7 @@ if (isset($_GET['edit'])) {
                                         $id_buku = 1;
                                         while ($data = $query->fetch_object()) {
                                         ?>
-                                            <tr>
+                                            <tr style="font-size: 13px;">
                                                 <td><?= $id_buku; ?></td>
                                                 <td><?= $data->judul_buku; ?></td>
                                                 <td><?= $data->pengarang; ?></td>
@@ -362,8 +353,15 @@ if (isset($_GET['edit'])) {
                                     <input type="text" name="tahun_terbit" class="form-control">
                                 </div>
                                 <div class="form-group">
-                                    <label>id_kategori</label>
-                                    <input type="text" name="id_kategori" class="form-control">
+                                    <label>ID Kategori</label>
+                                    <select name="id_kategori" class="form-control" required>
+                                        <option value="">Pilih Kategori</option>
+                                        <?php while ($row = mysqli_fetch_assoc($result)) : ?>
+                                            <option value="<?php echo $row['id_kategori']; ?>" <?php echo isset($editData) && $editData['id_kategori'] == $row['id_kategori'] ? 'selected' : ''; ?>>
+                                                <?php echo $row['id_kategori']; ?> - <?php echo $row['nama_kategori']; ?>
+                                            </option>
+                                        <?php endwhile; ?>
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label>stok</label>
@@ -394,27 +392,38 @@ if (isset($_GET['edit'])) {
                                 <input type="hidden" name="edit_id" value="<?= isset($editData['id_buku']) ? $editData['id_buku'] : '' ?>">
                                 <div class="form-group">
                                     <label for="judul_buku">judul buku</label>
-                                    <input type="text" name="judul_buku" class="form-control" value="<?= isset($editData['judul_buku']) ? $editData['nama_anggota'] : '' ?>">
+                                    <input type="text" name="judul_buku" class="form-control" value="<?= isset($editData['judul_buku']) ? $editData['judul_buku'] : '' ?>">
                                 </div>
                                 <div class="form-group">
                                     <label for="pengarang">pengarang</label>
-                                    <input type="text" name="pengarang" class="form-control" value="<?= isset($editData['pengarang']) ? $editData['jurusan'] : '' ?>">
+                                    <input type="text" name="pengarang" class="form-control" value="<?= isset($editData['pengarang']) ? $editData['pengarang'] : '' ?>">
                                 </div>
                                 <div class="form-group">
                                     <label for="penerbit">penerbit</label>
-                                    <input type="text" name="penerbit" class="form-control" value="<?= isset($editData['penerbit']) ? $editData['no_telp'] : '' ?>">
+                                    <input type="text" name="penerbit" class="form-control" value="<?= isset($editData['penerbit']) ? $editData['penerbit'] : '' ?>">
                                 </div>
                                 <div class="form-group">
                                     <label for="tahun_terbit">tahun terbit</label>
-                                    <input type="text" name="tahun_terbit" class="form-control" value="<?= isset($editData['tahun_terbit']) ? $editData['no_telp'] : '' ?>">
+                                    <input type="text" name="tahun_terbit" class="form-control" value="<?= isset($editData['tahun_terbit']) ? $editData['tahun_terbit'] : '' ?>">
                                 </div>
                                 <div class="form-group">
-                                    <label for="id_kategori">id katagori</label>
-                                    <input type="text" name="id_kategori" class="form-control" value="<?= isset($editData['id_kategori']) ? $editData['no_telp'] : '' ?>">
+                                    <label for="id_kategori">Kategori</label>
+                                    <select name="id_kategori" class="form-control" required>
+                                        <option value="">Pilih Kategori</option>
+                                        <?php
+                                        $kategoriResult = mysqli_query($conn, "SELECT id_kategori, nama_kategori FROM kategori");
+                                        while ($row = mysqli_fetch_assoc($kategoriResult)) :
+                                        ?>
+                                            <option value="<?php echo $row['id_kategori']; ?>" <?php echo isset($editData) && $editData['id_kategori'] == $row['id_kategori'] ? 'selected' : ''; ?>>
+                                                <?php echo $row['id_kategori']; ?>
+                                                <?php echo $row['nama_kategori']; ?>
+                                            </option>
+                                        <?php endwhile; ?>
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="stok">stok</label>
-                                    <input type="text" name="stok" class="form-control" value="<?= isset($editData['stok']) ? $editData['no_telp'] : '' ?>">
+                                    <input type="text" name="stok" class="form-control" value="<?= isset($editData['stok']) ? $editData['stok'] : '' ?>">
                                 </div>
                                 <button type="reset" class="btn btn-danger" data-dismiss="modal">Reset</button>
                                 <button type="submit" class="btn btn-primary">Simpan</button>
@@ -428,7 +437,7 @@ if (isset($_GET['edit'])) {
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <span>Copyright &copy; Your Website 2020</span>
+                        <span>PERPUSTAKAAN 2024</span>
                     </div>
                 </div>
             </footer>

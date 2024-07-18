@@ -10,17 +10,26 @@ if (!$queryPeminjaman) {
 $resultPeminjaman = mysqli_fetch_assoc($queryPeminjaman);
 $totalPeminjaman = $resultPeminjaman['total_peminjaman'];
 
-// Query untuk mendapatkan stok buku
-$queryBuku = mysqli_query($conn, "SELECT SUM(stok) as stok FROM buku");
-if (!$queryBuku) {
+// Query untuk mendapatkan total buku berdasarkan jumlah id_buku yang ada di tabel buku dengan keterangan stok tersedia
+$queryTotalBuku = mysqli_query($conn, "SELECT COUNT(id_buku) as total_buku FROM buku WHERE stok > 0");
+if (!$queryTotalBuku) {
     die("Query gagal: " . mysqli_error($conn));
 }
-$resultBuku = mysqli_fetch_assoc($queryBuku);
-$totalStok = $resultBuku['stok'];
+$resultTotalBuku = mysqli_fetch_assoc($queryTotalBuku);
+$totalBuku = $resultTotalBuku['total_buku'];
 
-$sisaBuku = $totalStok - $totalPeminjaman;
-$totalBuku = $totalPeminjaman + $sisaBuku;
+// Query untuk mendapatkan jumlah stok dari tabel stok
+$queryJumlahStok = mysqli_query($conn, "SELECT SUM(sisa_stok) as sisa_stok FROM stok");
+if (!$queryJumlahStok) {
+    die("Query gagal: " . mysqli_error($conn));
+}
+$resultJumlahStok = mysqli_fetch_assoc($queryJumlahStok);
+$jumlahStok = $resultJumlahStok['sisa_stok'];
+
+// Hitung sisa buku
+$sisaBuku = $jumlahStok - $totalPeminjaman;
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -41,9 +50,11 @@ $totalBuku = $totalPeminjaman + $sisaBuku;
         .page-heading {
             margin-top: 20px;
         }
+
         .card-spacing {
             margin-bottom: 20px;
         }
+
         .row {
             display: flex;
             justify-content: space-around;
@@ -101,10 +112,25 @@ $totalBuku = $totalPeminjaman + $sisaBuku;
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/peminjaman.php">Peminjaman</a>
                         <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/pengembalian.php">Pengembalian</a>
-                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/buku.php">Buku</a>
                     </div>
                 </div>
             </li>
+            <!--Collapse Buku-->
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseBuku" aria-expanded="true" aria-controls="collapseBuku">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>BUKU</span>
+                </a>
+                <div id="collapseBuku" class="collapse" aria-labelledby="headingBuku" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/buku.php">Buku</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/kategori.php">Kategori</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/rak.php">Rak</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/stok.php">Stok</a>
+                    </div>
+                </div>
+            </li>
+
             <!-- Divider -->
             <hr class="sidebar-divider">
         </ul>
@@ -144,113 +170,16 @@ $totalBuku = $totalPeminjaman + $sisaBuku;
                         </li>
                         <!-- Nav Item - Alerts -->
                         <li class="nav-item dropdown no-arrow mx-1">
-                            <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-bell fa-fw"></i>
+                            <a class="nav-link dropdown-toggle" href="https://ars.ac.id" target="_blank" role="button">
                                 <!-- Counter - Alerts -->
-                                <span class="badge badge-danger badge-counter">3+</span>
+                                <span>ARS UNIVERSITY</span>
                             </a>
-                            <!-- Dropdown - Alerts -->
-                            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="alertsDropdown">
-                                <h6 class="dropdown-header">
-                                    Alerts Center
-                                </h6>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-primary">
-                                            <i class="fas fa-file-alt text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 12, 2019</div>
-                                        <span class="font-weight-bold">A new monthly report is ready to download!</span>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-success">
-                                            <i class="fas fa-donate text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 7, 2019</div>
-                                        $290.29 has been deposited into your account!
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-warning">
-                                            <i class="fas fa-exclamation-triangle text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 2, 2019</div>
-                                        Spending Alert: We've noticed unusually high spending for your account.
-                                    </div>
-                                </a>
-                                <a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
-                            </div>
-                        </li>
-                        <!-- Nav Item - Messages -->
-                        <li class="nav-item dropdown no-arrow mx-1">
-                            <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-envelope fa-fw"></i>
-                                <!-- Counter - Messages -->
-                                <span class="badge badge-danger badge-counter">7</span>
-                            </a>
-                            <!-- Dropdown - Messages -->
-                            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="messagesDropdown">
-                                <h6 class="dropdown-header">
-                                    Message Center
-                                </h6>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="dropdown-list-image mr-3">
-                                        <img class="rounded-circle" src="img/undraw_profile_1.svg" alt="">
-                                        <div class="status-indicator bg-success"></div>
-                                    </div>
-                                    <div class="font-weight-bold">
-                                        <div class="text-truncate">Hi there! I am wondering if you can help me with a problem I've been having.</div>
-                                        <div class="small text-gray-500">Emily Fowler · 58m</div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="dropdown-list-image mr-3">
-                                        <img class="rounded-circle" src="img/undraw_profile_2.svg" alt="">
-                                        <div class="status-indicator"></div>
-                                    </div>
-                                    <div>
-                                        <div class="text-truncate">I have the photos that you ordered last month, how would you like them sent to you?</div>
-                                        <div class="small text-gray-500">Jae Chun · 1d</div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="dropdown-list-image mr-3">
-                                        <img class="rounded-circle" src="img/undraw_profile_3.svg" alt="">
-                                        <div class="status-indicator bg-warning"></div>
-                                    </div>
-                                    <div>
-                                        <div class="text-truncate">Last month's report looks great, I am very happy with the progress so far, keep up the good work!</div>
-                                        <div class="small text-gray-500">Morgan Alvarez · 2d</div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="dropdown-list-image mr-3">
-                                        <img class="rounded-circle" src="https://source.unsplash.com/Mv9hjnEUHR4/60x60" alt="">
-                                        <div class="status-indicator bg-success"></div>
-                                    </div>
-                                    <div>
-                                        <div class="text-truncate">Am I a good boy? The reason I ask is because someone told me that people say this to all dogs, even if they aren't good...</div>
-                                        <div class="small text-gray-500">Chicken the Dog · 2w</div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item text-center small text-gray-500" href="#">Read More Messages</a>
-                            </div>
                         </li>
                         <div class="topbar-divider d-none d-sm-block"></div>
                         <!-- Nav Item - User Information -->
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Douglas McGee</span>
-                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
+                                <img class="img-profile rounded-circle" src="../../../../PERPUSTAKAAN/files/public/assets/ARS.jpg">
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
@@ -288,6 +217,40 @@ $totalBuku = $totalPeminjaman + $sisaBuku;
                     <!-- Content Row -->
                     <div class="row">
 
+                        <!-- Total Buku Card -->
+                        <div class="col-xl-3 col-md-6 mb-4 card-spacing">
+                            <div class="card border-left-info shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Buku</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $totalBuku; ?></div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-book-reader fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Jumlah stok buku Card -->
+                        <div class="col-xl-3 col-md-6 mb-4 card-spacing">
+                            <div class="card border-left-secondary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Stok buku</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $jumlahStok; ?></div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-archive fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Peminjaman Card -->
                         <div class="col-xl-3 col-md-6 mb-4 card-spacing">
                             <div class="card border-left-primary shadow h-100 py-2">
@@ -321,26 +284,14 @@ $totalBuku = $totalPeminjaman + $sisaBuku;
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Total Buku Card -->
-                        <div class="col-xl-3 col-md-6 mb-4 card-spacing">
-                            <div class="card border-left-info shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Buku</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo $totalBuku; ?></div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-book-reader fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                     <!-- End Content Row -->
+                     <hr>
+                    <p class="mb-2"><b>Total buku</b> diambil dari jumlah baris id_buku pada tabel buku</p>
+                    <p class="mb-2"><b>Stok buku</b> diambil dari jumlah keseluruhan jumlah_stok pada tabel stok</p>
+                    <p class="mb-2"><b>Total peminjaman</b> diambil dari jumlah status dipinjam pada tabel peminjaman</p>
+                    <p class="mb-2"><b>Sisa buku</b> diambil dari hasil jumlah stok - total peminjaman</p>
+
                 </div>
                 <!-- End Container Fluid -->
 

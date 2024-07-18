@@ -34,11 +34,12 @@ include(__DIR__ . '/../../app/koneksi.php');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['edit_id'])) {
         $id = $_POST['edit_id'];
-        $nama_anggota = $_POST['nama_anggota'];
+        $nim = $_POST['nim'];
+        $nama_mhs = $_POST['nama_mhs'];
         $jurusan = $_POST['jurusan'];
         $no_telp = $_POST['no_telp'];
 
-        $update = mysqli_query($conn, "UPDATE anggota SET nama_anggota='$nama_anggota', jurusan='$jurusan', no_telp='$no_telp' WHERE id_anggota='$id'");
+        $update = mysqli_query($conn, "UPDATE anggota SET nim='$nim', nama_mhs='$nama_mhs', jurusan='$jurusan', no_telp='$no_telp' WHERE nim='$id'");
 
         if ($update) {
             header("Location: " . $_SERVER['PHP_SELF']);
@@ -47,11 +48,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo "Error: " . mysqli_error($conn);
         }
     } else {
-        $nama_anggota = $_POST['nama_anggota'];
+        $nim = $_POST['nim'];
+        $nama_mhs = $_POST['nama_mhs'];
         $jurusan = $_POST['jurusan'];
         $no_telp = $_POST['no_telp'];
 
-        $insert = mysqli_query($conn, "INSERT INTO anggota (nama_anggota, jurusan, no_telp) VALUES ('$nama_anggota', '$jurusan', '$no_telp')");
+        $insert = mysqli_query($conn, "INSERT INTO anggota (nim, nama_mhs, jurusan, no_telp) VALUES ('$nim', '$nama_mhs', '$jurusan', '$no_telp')");
 
         if ($insert) {
             header("Location: " . $_SERVER['PHP_SELF']);
@@ -62,24 +64,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$query = mysqli_query($conn, "SELECT * FROM anggota ORDER BY id_anggota ASC");
+$query = mysqli_query($conn, "SELECT * FROM anggota ORDER BY nim ASC");
 if (!$query) {
     die("Query gagal: " . mysqli_error($conn));
 }
 
 if (isset($_GET['hapus'])) {
     $id = $_GET['hapus'];
-    $hapus = $conn->query("DELETE FROM anggota WHERE id_anggota='$id'");
+    $hapus = $conn->query("DELETE FROM anggota WHERE nim='$id'");
     echo "<script>window.location.href='anggota.php';</script>";
 }
 
 $editData = null;
 if (isset($_GET['edit'])) {
     $id = $_GET['edit'];
-    $editQuery = mysqli_query($conn, "SELECT * FROM anggota WHERE id_anggota='$id'");
+    $editQuery = mysqli_query($conn, "SELECT * FROM anggota WHERE nim='$id'");
     $editData = mysqli_fetch_assoc($editQuery);
 }
 ?>
+
 
 <body id="page-top">
 
@@ -96,8 +99,8 @@ if (isset($_GET['edit'])) {
             <hr class="sidebar-divider my-0">
             <!-- Nav Item - Dashboard -->
             <li class="nav-item">
-            <a class="nav-link" href="/PERPUSTAKAAN/files/views/template/main.php">
-            <i class="fas fa-fw fa-tachometer-alt"></i>
+                <a class="nav-link" href="/PERPUSTAKAAN/files/views/template/main.php">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
                     <span>Dashboard</span>
                 </a>
             </li>
@@ -116,7 +119,7 @@ if (isset($_GET['edit'])) {
                 <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/anggota.php">Data Anggota</a>
-                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/petugas.php">Data Petugas</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/admin.php">Data Admin</a>
                     </div>
                 </div>
             </li>
@@ -130,10 +133,25 @@ if (isset($_GET['edit'])) {
                     <div class="bg-white py-2 collapse-inner rounded">
                         <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/peminjaman.php">Peminjaman</a>
                         <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/pengembalian.php">Pengembalian</a>
-                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/buku.php">Buku</a>
                     </div>
                 </div>
             </li>
+            <!--Collapse Buku-->
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseBuku" aria-expanded="true" aria-controls="collapseBuku">
+                    <i class="fas fa-fw fa-book"></i>
+                    <span>BUKU</span>
+                </a>
+                <div id="collapseBuku" class="collapse" aria-labelledby="headingBuku" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/buku.php">Buku</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/kategori.php">Kategori</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/rak.php">Rak</a>
+                        <a class="collapse-item" href="/PERPUSTAKAAN/files/views/template/stok.php">Stok</a>
+                    </div>
+                </div>
+            </li>
+
             <!-- Divider -->
             <hr class="sidebar-divider">
         </ul>
@@ -154,74 +172,12 @@ if (isset($_GET['edit'])) {
 
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto">
-
-                        <!-- Nav Item - Search Dropdown (Visible Only XS) -->
-                        <li class="nav-item dropdown no-arrow d-sm-none">
-                            <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-search fa-fw"></i>
-                            </a>
-                            <!-- Dropdown - Messages -->
-                            <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in" aria-labelledby="searchDropdown">
-                                <form class="form-inline mr-auto w-100 navbar-search">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search" aria-describedby="basic-addon2">
-                                        <div class="input-group-append">
-                                            <button class="btn btn-primary" type="button">
-                                                <i class="fas fa-search fa-sm"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </li>
-
                         <!-- Nav Item - Alerts -->
                         <li class="nav-item dropdown no-arrow mx-1">
-                            <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-bell fa-fw"></i>
+                            <a class="nav-link dropdown-toggle" href="https://ars.ac.id" target="_blank" role="button">
                                 <!-- Counter - Alerts -->
-                                <span class="badge badge-danger badge-counter">3+</span>
+                                <span>ARS UNIVERSITY</span>
                             </a>
-                            <!-- Dropdown - Alerts -->
-                            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="alertsDropdown">
-                                <h6 class="dropdown-header">
-                                    Alerts Center
-                                </h6>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-primary">
-                                            <i class="fas fa-file-alt text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 12, 2019</div>
-                                        <span class="font-weight-bold">A new monthly report is ready to download!</span>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-success">
-                                            <i class="fas fa-donate text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 7, 2019</div>
-                                        $290.29 has been deposited into your account!
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-warning">
-                                            <i class="fas fa-exclamation-triangle text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 2, 2019</div>
-                                        Spending Alert: We've noticed unusually high spending for your account.
-                                    </div>
-                                </a>
-                                <a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
-                            </div>
                         </li>
 
                         <div class="topbar-divider d-none d-sm-block"></div>
@@ -229,8 +185,7 @@ if (isset($_GET['edit'])) {
                         <!-- Nav Item - User Information -->
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Douglas McGee</span>
-                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
+                                <img class="img-profile rounded-circle" src="../../../../PERPUSTAKAAN/files/public/assets/ARS.jpg">
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
@@ -273,40 +228,35 @@ if (isset($_GET['edit'])) {
                                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                                     <thead>
                                         <tr>
-                                            <th>id_anggota</th>
-                                            <th>nama_anggota</th>
+                                            <th>nim</th>
+                                            <th>nama mahasiswa</th>
                                             <th>jurusan</th>
-                                            <th>no_telp</th>
+                                            <th>no telp</th>
                                             <th>aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php
-                                        $id_anggota = 1;
                                         while ($data = $query->fetch_object()) {
                                         ?>
                                             <tr>
-                                                <td><?= $id_anggota; ?></td>
-                                                <td><?= $data->nama_anggota; ?></td>
+                                                <td><?= $data->nim; ?></td> <!-- Mengakses nim dengan benar -->
+                                                <td><?= $data->nama_mhs; ?></td>
                                                 <td><?= $data->jurusan; ?></td>
                                                 <td><?= $data->no_telp; ?></td>
                                                 <td>
-                                                    <a href="?edit=<?= $data->id_anggota; ?>" class="btn btn-warning" style="font-size: 14px; padding: 2px 5px;" data-target="#editModal">
+                                                    <a href="?edit=<?= $data->nim; ?>" class="btn btn-warning" style="font-size: 14px; padding: 2px 5px;" data-target="#editModal">
                                                         <i class="fa fa-edit" style="font-size: 14px;"></i> Edit
                                                     </a>
-                                                    <a href="?hapus=<?= $data->id_anggota; ?>" class="btn btn-danger btn-sm" style="font-size: 14px; padding: 2px 5px;" onclick="return confirm('Yakin menghapus data ini?');">
+                                                    <a href="?hapus=<?= $data->nim; ?>" class="btn btn-danger btn-sm" style="font-size: 14px; padding: 2px 5px;" onclick="return confirm('Yakin menghapus data ini?');">
                                                         <i class="fa fa-trash" style="font-size: 14px;"></i> Hapus
                                                     </a>
                                                 </td>
-
-
-
-                                                </td>
                                             </tr>
                                         <?php
-                                            $id_anggota++;
                                         }
                                         ?>
+
                                     </tbody>
                                 </table>
                             </div>
@@ -332,8 +282,12 @@ if (isset($_GET['edit'])) {
                         <div class="modal-body">
                             <form method="post" action="../../../../PERPUSTAKAAN/files/views/template/anggota.php">
                                 <div class="form-group">
-                                    <label>nama anggota</label>
-                                    <input type="text" name="nama_anggota" class="form-control">
+                                    <label>nim</label>
+                                    <input type="text" name="nim" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label>nama mahasiswa</label>
+                                    <input type="text" name="nama_mhs" class="form-control">
                                 </div>
 
                                 <div class="form-group">
@@ -367,10 +321,14 @@ if (isset($_GET['edit'])) {
                         </div>
                         <div class="modal-body">
                             <form action="../../../../PERPUSTAKAAN/files/views/template/anggota.php" method="post">
-                                <input type="hidden" name="edit_id" value="<?= isset($editData['id_anggota']) ? $editData['id_anggota'] : '' ?>">
+                                <input type="hidden" name="edit_id" value="<?= isset($editData['nim']) ? $editData['nim'] : '' ?>">
                                 <div class="form-group">
-                                    <label for="nama_anggota">nama anggota</label>
-                                    <input type="text" name="nama_anggota" class="form-control" value="<?= isset($editData['nama_anggota']) ? $editData['nama_anggota'] : '' ?>">
+                                    <label for="nim">nim</label>
+                                    <input type="text" name="nim" class="form-control" value="<?= isset($editData['nim']) ? $editData['nim'] : '' ?>">
+                                </div>
+                                <div class="form-group">
+                                    <label for="nama_mhs">nama mahasiswa</label>
+                                    <input type="text" name="nama_mhs" class="form-control" value="<?= isset($editData['nama_mhs']) ? $editData['nama_mhs'] : '' ?>">
                                 </div>
                                 <div class="form-group">
                                     <label for="jurusan">jurusan</label>
